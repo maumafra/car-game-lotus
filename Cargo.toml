@@ -1,0 +1,7 @@
+[package]
+name = "Car-Game-Prototype"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+lotus_engine = "0.1.11"
