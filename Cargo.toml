@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 lotus_engine = "0.1.11"
+rand = "0.9.0"
