@@ -1,4 +1,5 @@
 use lotus_engine::*;
+use std::time::Duration;
 
 #[derive(Clone, Component)]
 pub struct JustAComponent();
@@ -7,19 +8,25 @@ pub struct JustAComponent();
 pub struct JustAResource(u32);
 
 #[derive(Clone, Component)]
-pub struct RaceCar();
+pub struct MainCar();
+
+#[derive(Clone, Component)]
+pub struct MainCarSpeed(f32);
 
 #[derive(Clone, Component)]
 pub struct Car();
 
-#[derive(Clone, Resource)]
-pub struct CarSpawner(pub Timer);
+#[derive(Clone, Component)]
+pub struct Border();
 
-//impl Default for CarSpawner {
-//    fn default() -> Self {
-//        return Self(Timer::new(TimerType::Repeat, Duration::new(2, 0)))
-//    }
-//}
+#[derive(Clone, Resource)]
+pub struct CarSpawnTimer(pub Timer);
+
+impl Default for CarSpawnTimer {
+    fn default() -> Self {
+        return Self(Timer::new(TimerType::Repeat, Duration::new(2, 0)))
+    }
+}
 
 your_game!(
     WindowConfiguration::default(),
@@ -28,49 +35,66 @@ your_game!(
 );
 
 fn setup(context: &mut Context) {
-    // Shape => Component
     let white_lancer_sprite: Sprite = Sprite::new("sprites/white-lancer.png".to_string());
     let red_car_sprite: Sprite = Sprite::new("sprites/red-car.png".to_string());
     let blue_car_sprite: Sprite = Sprite::new("sprites/blue-car.png".to_string());
     let yellow_car_sprite: Sprite = Sprite::new("sprites/yellow-car.png".to_string());
 
+    let player_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED);
+
+    let border_left_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::BLACK);
+    let border_right_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::BLACK);
+
     context.commands.spawn(
         vec![
-            Box::new(white_lancer_sprite),
-            Box::new(Transform::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(0.1, 0.1)))
+            Box::new(player_shape),
+            Box::new(Transform::new(Vector2::new(0.0, -0.5), 0.0, Vector2::new(0.08, 0.4))),
+            Box::new(MainCar()),
+            Box::new(MainCarSpeed(1.0)),
+            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
         ]
-    )
+    );
 
-    //let my_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED);
+    context.commands.spawn(
+        vec![
+            Box::new(border_left_shape),
+            Box::new(Transform::new(Vector2::new(0.8, 0.0), 0.0, Vector2::new(0.01, 5.0))),
+            Box::new(Border()),
+            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
+        ]
+    );
 
-    // Transform::new(Vector2: positsion, Int: rotation, Vector2: scale)
-    
-    //let transform: Transform = Transform::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(0.25, 0.25));
-
-    //context.commands.spawn(vec![Box::new(my_shape), Box::new(transform), Box::new(JustAComponent())]);
-
-    //context.commands.add_resource(Box::new(JustAResource(1)));
+    context.commands.spawn(
+        vec![
+            Box::new(border_right_shape),
+            Box::new(Transform::new(Vector2::new(-0.8, 0.0), 0.0, Vector2::new(0.01, 5.0))),
+            Box::new(Border()),
+            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
+        ]
+    );
 }
 
 fn update(context: &mut Context) {
-    // Just to demonstrate, you can set more filters to your query.
-    // In this case only passing Shape would do the trick.
-    // But our entity have the Transform component too, so it will work as well.
-    //let mut query: Query =  Query::new(&context.world).with::<JustAComponent>();
-    //let my_entity: Entity = query.entities_with_components().unwrap().first().unwrap().clone();
-    //let mut transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&my_entity).unwrap();
-//
-    //let input: ResourceRef<'_, Input> = context.world.get_resource::<Input>().unwrap();
-//
-    //let mut just_a_resource: ResourceRefMut<'_, JustAResource> = context.world.get_resource_mut::<JustAResource>().unwrap();
-//
-    //if input.is_key_pressed(PhysicalKey::Code(KeyCode::KeyX)) {
-    //    let my_rotation: f32 = transform.rotation + 100.0 * context.delta;
-    //    transform.set_rotation(&context.render_state, my_rotation);
-    //}
-//
-    //if input.is_key_released(PhysicalKey::Code(KeyCode::KeyX)) {
-    //    just_a_resource.0 += 1;
-    //    eprintln!("Resource Value: {:?}", just_a_resource.0);
-    //}
+    let input: ResourceRef<'_, Input> = context.world.get_resource::<Input>().unwrap();
+
+    let mut player_entity_query: Query = Query::new(&context.world).with::<MainCar>();
+    let player_entity: Entity = player_entity_query.entities_with_components().unwrap().first().unwrap().clone();
+
+    move_player_car(context, player_entity, input);
+    
+}
+
+fn move_player_car(context: &Context, player_entity: Entity, input: ResourceRef<'_, Input>) {
+    let mut transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&player_entity).unwrap();
+    let car_speed: ComponentRef<'_, MainCarSpeed> = context.world.get_entity_component::<MainCarSpeed>(&player_entity).unwrap();
+
+    if input.is_key_pressed(PhysicalKey::Code(KeyCode::KeyA)) {
+        let move_left = transform.position.x - car_speed.0 * context.delta;
+        transform.set_position_x(&context.render_state, move_left);
+    }
+
+    if input.is_key_pressed(PhysicalKey::Code(KeyCode::KeyD)) {
+        let move_right = transform.position.x + car_speed.0 * context.delta;
+        transform.set_position_x(&context.render_state, move_right);
+    }
 }
