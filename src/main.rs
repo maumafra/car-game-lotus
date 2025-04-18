@@ -1,4 +1,4 @@
-use lotus_engine::{core::ecs::entity, *};
+use lotus_engine::*;
 use rand::{rngs::ThreadRng, seq::IndexedRandom, Rng};
 use std::{time::Duration, vec};
 
@@ -59,8 +59,8 @@ your_game!(
 fn setup(context: &mut Context) {
     let white_lancer_sprite: Sprite = Sprite::new("sprites/64x64/cars/white-lancer.png".to_string());
 
-    let border_left_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED);
-    let border_right_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED);
+    //let border_left_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED);
+    //let border_right_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED);
 
     //let test: Shape = Shape::new(Orientation::Horizontal, GeometryType::Square, Color::RED);
     //context.commands.spawn(
@@ -72,37 +72,28 @@ fn setup(context: &mut Context) {
 
     context.commands.spawn(
         vec![
-            Box::new(Sprite::new("sprites/256x256/worlds/night-bridge.png".to_string())),
+            Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
             Box::new(Transform::new(Vector2::new(0.005, 0.0), 0.0, Vector2::new(1.55, 1.0))),
-            Box::new(Velocity::new(Vector2::new(0.0, -3.0))),
-            Box::new(Background())
+            Box::new(Background()),
+            Box::new(DrawOrder(0))
         ]
     );
 
     context.commands.spawn(
         vec![
-            Box::new(Sprite::new("sprites/256x256/worlds/night-bridge.png".to_string())),
-            Box::new(Transform::new(Vector2::new(0.005, 1.9), 0.0, Vector2::new(1.55, 1.0))),
-            Box::new(Velocity::new(Vector2::new(0.0, -3.0))),
-            Box::new(Background())
+            Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
+            Box::new(Transform::new(Vector2::new(0.005, 2.0), 0.0, Vector2::new(1.55, 1.0))),
+            Box::new(Background()),
+            Box::new(DrawOrder(0))
         ]
     );
 
     context.commands.spawn(
         vec![
-            Box::new(Sprite::new("sprites/256x256/worlds/night-bridge.png".to_string())),
-            Box::new(Transform::new(Vector2::new(0.005, 3.8), 0.0, Vector2::new(1.55, 1.0))),
-            Box::new(Velocity::new(Vector2::new(0.0, -3.0))),
-            Box::new(Background())
-        ]
-    );
-
-    context.commands.spawn(
-        vec![
-            Box::new(Sprite::new("sprites/256x256/worlds/night-bridge.png".to_string())),
-            Box::new(Transform::new(Vector2::new(0.005, 5.7), 0.0, Vector2::new(1.55, 1.0))),
-            Box::new(Velocity::new(Vector2::new(0.0, -3.0))),
-            Box::new(Background())
+            Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
+            Box::new(Transform::new(Vector2::new(0.005, 4.0), 0.0, Vector2::new(1.55, 1.0))),
+            Box::new(Background()),
+            Box::new(DrawOrder(0))
         ]
     );
 
@@ -117,13 +108,14 @@ fn setup(context: &mut Context) {
             Box::new(Transform::new(Vector2::new(0.0, -0.5), 0.0, Vector2::new(0.08, 0.08))),
             Box::new(MainCar()),
             Box::new(Velocity::new(Vector2::new(1.0, 1.0))),
-            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
+            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),
+            Box::new(DrawOrder(3))
         ]
     );
 
     context.commands.spawn(
         vec![
-            Box::new(border_left_shape),
+            //Box::new(border_left_shape),
             Box::new(Transform::new(Vector2::new(0.5, 0.0), 0.0, Vector2::new(0.01, 5.0))),
             Box::new(Border()),
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
@@ -132,7 +124,7 @@ fn setup(context: &mut Context) {
 
     context.commands.spawn(
         vec![
-            Box::new(border_right_shape),
+            //Box::new(border_right_shape),
             Box::new(Transform::new(Vector2::new(-0.5, 0.0), 0.0, Vector2::new(0.01, 5.0))),
             Box::new(Border()),
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
@@ -141,56 +133,61 @@ fn setup(context: &mut Context) {
 }
 
 fn update(context: &mut Context) {
-    context.render_state.entities_to_render.clear(); //Limpa fila de render
 
     let player_entity: Entity = {
         let mut player_entity_query: Query = Query::new(&context.world).with::<MainCar>();
         player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
 
-    let opponents_entities: Vec<Entity> = {
-        let mut opponents_query: Query = Query::new(&context.world).with::<OpponentCar>();
-        opponents_query.entities_with_components().unwrap()
-    };
-
-    handle_background_movement(context);
+    handle_background_spawn(context);
+    move_background(context);
 
     let input: ResourceRef<'_, Input> = context.world.get_resource::<Input>().unwrap();
 
     move_player(context, player_entity, input);
-    check_player_collision(context, player_entity);
-    handle_opponents_movement(context, opponents_entities);
+    handle_opponents_movement(context);
+    check_player_border_collision(context, player_entity);
+    check_player_opponent_collision(context, player_entity);
     spawn_opponent(context);
-
-    context.render_state.entities_to_render.push(player_entity);
-    //set_render_order(context);
 }
 
-fn handle_background_movement(context: &mut Context) {
+fn handle_background_spawn(context: &mut Context) {
     let background_entities: Vec<Entity> = {
         let mut background_query: Query = Query::new(&context.world).with::<Background>();
         background_query.entities_with_components().unwrap()
     };
-    for backgound in background_entities {
-        context.render_state.entities_to_render.push(backgound);
 
+    let first_background_entity: Entity =  background_entities.first().unwrap().clone();
+    let last_background_entity: Entity =  background_entities.last().unwrap().clone();
+
+    let f_bg_transform: ComponentRef<'_, Transform> = context.world.get_entity_component::<Transform>(&first_background_entity).unwrap();
+    let l_bg_transform: ComponentRef<'_, Transform> = context.world.get_entity_component::<Transform>(&last_background_entity).unwrap();
+
+    if f_bg_transform.get_position().y <= -1.99 {
+        let spawn_y: f32 = 1.9 + l_bg_transform.get_position().y;
+        context.commands.spawn(
+            vec![
+                Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
+                Box::new(Transform::new(Vector2::new(0.005, spawn_y), 0.0, Vector2::new(1.55, 1.0))),
+                Box::new(DrawOrder(0)),
+                Box::new(Background())
+            ]
+        );
+        context.commands.despawn(first_background_entity);
+    }
+}
+
+fn move_background(context: &Context) {
+    let background_entities: Vec<Entity> = {
+        let mut background_query: Query = Query::new(&context.world).with::<Background>();
+        background_query.entities_with_components().unwrap()
+    };
+
+    for backgound in background_entities {
         let mut bg_transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&backgound).unwrap();
 
-        if bg_transform.get_position().y <= -2.0 {
-            context.commands.despawn(backgound);
-            context.commands.spawn(
-                vec![
-                    Box::new(Sprite::new("sprites/256x256/worlds/night-bridge.png".to_string())),
-                    Box::new(Transform::new(Vector2::new(0.005, 5.0-3.0*context.delta), 0.0, Vector2::new(1.55, 1.0))),
-                    Box::new(Velocity::new(Vector2::new(0.0, -3.0))),
-                    Box::new(Background())
-                ]
-            );
-        } else {
-            let bg_velocity: ComponentRef<'_, Velocity> = context.world.get_entity_component::<Velocity>(&backgound).unwrap();
-            let move_down: f32 = bg_transform.get_position().y + bg_velocity.value.y * context.delta;
-            bg_transform.set_position_y(&context.render_state, move_down);
-        }
+        let move_down: f32 = bg_transform.get_position().y - 3.0 * context.delta;
+        bg_transform.set_position_y(&context.render_state, move_down);
     }
 }
 
@@ -209,7 +206,7 @@ fn move_player(context: &Context, player_entity: Entity, input: ResourceRef<'_, 
     }
 }
 
-fn check_player_collision(context: &Context, player_entity: Entity) {
+fn check_player_border_collision(context: &Context, player_entity: Entity) {
     let mut border_query: Query = Query::new(&context.world).with::<Border>();
     let borders_entities: Vec<Entity> = border_query.entities_with_components().unwrap();
 
@@ -224,10 +221,28 @@ fn check_player_collision(context: &Context, player_entity: Entity) {
     }
 }
 
-fn handle_opponents_movement(context: &mut Context, opponents_entities: Vec<Entity>) {
-    for opponent in opponents_entities {
-        context.render_state.entities_to_render.push(opponent);
+fn check_player_opponent_collision(context: &Context, player_entity: Entity) {
+    let mut opponents_query: Query = Query::new(&context.world).with::<OpponentCar>();
+    let opponents_entities: Vec<Entity> = opponents_query.entities_with_components().unwrap();
 
+    let player_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(&player_entity).unwrap();
+
+    for opponent in &opponents_entities {
+        let opponent_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(opponent).unwrap();
+
+        if Collision::check(CollisionAlgorithm::Aabb, &player_collision, &opponent_collision) {
+            eprintln!("crash!");
+        }
+    }
+}
+
+fn handle_opponents_movement(context: &mut Context) {
+    let opponents_entities: Vec<Entity> = {
+        let mut opponents_query: Query = Query::new(&context.world).with::<OpponentCar>();
+        opponents_query.entities_with_components().unwrap()
+    };
+
+    for opponent in opponents_entities {
         let mut op_transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&opponent).unwrap();
 
         if op_transform.get_position().y < -1.5 {
@@ -249,9 +264,6 @@ fn spawn_opponent(context: &mut Context) {
     };
 
     if timer_finished {
-        // Testing timer.
-        eprintln!("timers up");
-
         let mut thread_rng: ThreadRng = rand::rng();
         let number_of_opponents_to_spawn: i32 = thread_rng.random_range(1..=3);
         let car_sprites: CarSprites = {
@@ -285,22 +297,8 @@ fn spawn_opponent_car(context: &mut Context, lane_number: i32, car_srpite_path: 
             Box::new(Transform::new(Vector2::new(x_position, y_position), 0.0, Vector2::new(0.08, 0.08))),
             Box::new(OpponentCar()),
             Box::new(Velocity::new(Vector2::new(0.0, -2.0))),
-            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
+            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),
+            Box::new(DrawOrder(2))
         ]
     );
 }
-
-//fn set_render_order(context: &mut Context) {
-//    let background_entities: Vec<Entity> = {
-//        let mut background_entities_query: Query = Query::new(&context.world).with::<Background>();
-//        background_entities_query.entities_with_components().unwrap()
-//    };
-//    let opponents_entities: Vec<Entity> = {
-//        let mut opponents_entities_query: Query = Query::new(&context.world).with::<OpponentCar>();
-//        opponents_entities_query.entities_with_components().unwrap()
-//    };
-//    let opponents_entities: Vec<Entity> = {
-//        let mut opponents_entities_query: Query = Query::new(&context.world).with::<OpponentCar>();
-//        opponents_entities_query.entities_with_components().unwrap()
-//    };
-//}
