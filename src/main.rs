@@ -1,3 +1,4 @@
+use lotus_engine::core::ecs::{query, world};
 use lotus_engine::*;
 use rand::{rngs::ThreadRng, seq::IndexedRandom, Rng};
 use std::time::{Duration, Instant};
@@ -20,6 +21,11 @@ pub struct Background();
 
 #[derive(Component)]
 pub struct TimeComponent();
+
+#[derive(Component)]
+pub struct Menu();
+#[derive(Component)]
+pub struct GameRunning();
 
 #[derive(Resource)]
 pub struct CarSpawnTimer(pub Timer);
@@ -47,6 +53,24 @@ impl Default for ScoreTime {
     }
 }
 
+#[derive(Resource)]
+pub struct Highscore(pub Duration);
+
+#[derive(Clone, Resource)]
+pub struct GameState(pub GameStateEnum);
+
+impl Default for GameState {
+    fn default() -> Self {
+        return Self(GameStateEnum::Menu);
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub enum GameStateEnum {
+    Menu,
+    Paused,
+    Running
+}
 
 #[derive(Clone, Resource)]
 pub struct CarSprites(pub Vec<String>);
@@ -85,10 +109,21 @@ your_game!(
 );
 
 fn setup(context: &mut Context) {
+    context.commands.spawn(
+        vec![
+            Box::new(Sprite::new("sprites/960x600/menu.png".to_string())),
+            Box::new(Transform::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(1.6, 1.0))),
+            Box::new(Menu()),
+            Box::new(DrawOrder(10))
+        ]
+    );
+
     let white_lancer_sprite: Sprite = Sprite::new("sprites/64x64/cars/white-lancer.png".to_string());
 
     context.commands.add_resources(vec![
+        Box::new(GameState::default()),
         Box::new(ScoreTime::default()),
+        Box::new(Highscore(Duration::ZERO)),
         Box::new(CarSpawnTimer::default()),
         Box::new(CarSprites::default()),
         Box::new(BackgroundTileCounter(0))
@@ -171,6 +206,20 @@ fn setup(context: &mut Context) {
         Color::WHITE,
         "00:00:000".to_string()
     );
+    let highscore_text: Text = Text::new(
+        //Font::new(Fonts::UnderdogRegular.get_path(), 40.0),
+        Font::new("fonts/x12y16pxMaruMonica.ttf".to_string(), 40.0),
+        Vector2::new(0.04, 0.28),
+        Color::ORANGE,
+        "HIGHSCORE".to_string()
+    );
+    let highscore_time: Text = Text::new(
+        //Font::new(Fonts::UnderdogRegular.get_path(), 40.0),
+        Font::new("fonts/x12y16pxMaruMonica.ttf".to_string(), 40.0),
+        Vector2::new(0.053, 0.35),
+        Color::ORANGE,
+        "00:00:000".to_string()
+    );
     context.commands.spawn(
         vec![
             Box::new(Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::BLACK)),
@@ -191,6 +240,19 @@ fn setup(context: &mut Context) {
             Box::new(DrawOrder(5))
         ]
     );
+    context.commands.spawn(
+        vec![
+            Box::new(highscore_text),
+            Box::new(DrawOrder(5))
+        ]
+    );
+    context.commands.spawn(
+        vec![
+            Box::new(highscore_time),
+            Box::new(TimeComponent()),
+            Box::new(DrawOrder(5))
+        ]
+    );
     
 }
 
@@ -200,14 +262,17 @@ fn update(context: &mut Context) {
         player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
 
-    update_score_time(context);
-    handle_background_tiles(context);
-    move_background(context);
-    handle_input(context, player_entity);
-    handle_opponents_movement(context);
-    check_player_border_collision(context, player_entity);
-    check_player_opponent_collision(context, player_entity);
-    spawn_opponent(context);
+    handle_input(context);
+
+    if context.world.get_resource::<GameState>().unwrap().0 == GameStateEnum::Running {
+        move_player(context, player_entity);
+        update_score_time(context);
+        handle_background_tiles(context);
+        move_background(context);
+        handle_opponents_movement(context);
+        check_player_collisions(context, player_entity);
+        spawn_opponent(context);
+    }
 }
 
 fn update_score_time(context: &mut Context) {
@@ -221,21 +286,70 @@ fn update_score_time(context: &mut Context) {
         time_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
 
-    let mut text_component: ComponentRefMut<'_, Text> = context.world.get_entity_component_mut::<Text>(&time_entity).unwrap();
     score_time.current_time = score_time.start_time.elapsed();
     let millis: u128 = score_time.current_time.as_millis()%1000;
     let seconds: u32 = ((score_time.current_time.as_millis()/1000)%60) as u32;
     let minutes: u32 = (score_time.current_time.as_millis()/60000) as u32;
 
-    text_component.content = (format!("{:02}:{:02}:{:03}", minutes, seconds, millis)).to_string();
-    let text_renderer: TextRenderer = TextRenderer::new(&context.render_state, &text_component);
-    context.render_state.text_renderers.insert(time_entity.0, text_renderer);
+    context.render_state.text_renderers.get_mut(&time_entity.0).unwrap().update_brush(
+        (format!("{:02}:{:02}:{:03}", minutes, seconds, millis)).to_string(),
+        context.render_state.queue.clone(),
+        context.render_state.physical_size
+    );
 }
 
-fn handle_input(context: &Context, player_entity: Entity) {
+fn save_highscore_time(context: &mut Context) {
+    let score_time: ResourceRef<ScoreTime> = context.world.get_resource::<ScoreTime>().unwrap();
+    let mut highscore_time: ResourceRefMut<Highscore> = context.world.get_resource_mut::<Highscore>().unwrap();
+
+    let highscore_entity: Entity = {
+        let mut highscore_entity_query: Query = Query::new(&context.world).with::<TimeComponent>();
+        highscore_entity_query.entities_with_components().unwrap().last().unwrap().clone()
+    };
+    let highscore: Duration = score_time.start_time.elapsed();
+    if highscore_time.0 < highscore{
+        highscore_time.0 = highscore;
+        let millis: u128 = highscore.as_millis()%1000;
+        let seconds: u32 = ((highscore.as_millis()/1000)%60) as u32;
+        let minutes: u32 = (highscore.as_millis()/60000) as u32;
+
+        context.render_state.text_renderers.get_mut(&highscore_entity.0).unwrap().update_brush(
+            (format!("{:02}:{:02}:{:03}", minutes, seconds, millis)).to_string(),
+            context.render_state.queue.clone(),
+            context.render_state.physical_size
+        );
+    }   
+}
+
+fn handle_input(context: &Context) {
     let input: ResourceRef<'_, Input> = context.world.get_resource::<Input>().unwrap();
 
-    move_player(context, player_entity, &input);
+    if input.is_key_released(PhysicalKey::Code(KeyCode::Enter)) {
+        let mut game_state: ResourceRefMut<'_, GameState> = context.world.get_resource_mut::<GameState>().unwrap();
+        let mut score_time: ResourceRefMut<'_, ScoreTime> = context.world.get_resource_mut::<ScoreTime>().unwrap();
+        if game_state.0 == GameStateEnum::Menu {
+            game_state.0 = GameStateEnum::Running;
+
+            let mut menu_query: Query =  Query::new(&context.world).with::<Menu>();
+            let menu_entity: Entity = menu_query.entities_with_components().unwrap().first().unwrap().clone();
+            change_visibilty(context, &menu_entity);
+
+            score_time.start_time = Instant::now() - score_time.current_time;
+        }
+    }
+
+    if input.is_key_released(PhysicalKey::Code(KeyCode::Escape)) {
+        let mut game_state: ResourceRefMut<'_, GameState> = context.world.get_resource_mut::<GameState>().unwrap();
+        let mut score_time: ResourceRefMut<'_, ScoreTime> = context.world.get_resource_mut::<ScoreTime>().unwrap();
+        if game_state.0 == GameStateEnum::Running {
+            game_state.0 = GameStateEnum::Paused;
+            score_time.paused = true;
+        } else if game_state.0 == GameStateEnum::Paused {
+            game_state.0 = GameStateEnum::Running;
+            score_time.paused = false;
+            score_time.start_time = Instant::now() - score_time.current_time;
+        }
+    }
     set_debug_visibility(context, &input);
 }
 
@@ -277,7 +391,8 @@ fn move_background(context: &Context) {
     }
 }
 
-fn move_player(context: &Context, player_entity: Entity, input: &ResourceRef<'_, Input>) {
+fn move_player(context: &Context, player_entity: Entity) {
+    let input: ResourceRef<'_, Input> = context.world.get_resource::<Input>().unwrap();
     let mut transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&player_entity).unwrap();
     let car_speed: ComponentRef<'_, Velocity> = context.world.get_entity_component::<Velocity>(&player_entity).unwrap();
 
@@ -307,40 +422,65 @@ fn set_debug_visibility(context: &Context, input: &ResourceRef<'_, Input>) {
         let debug_entities: Vec<Entity> = debug_query.entities_with_components().unwrap();
     
         for debug_entity in &debug_entities {
-            let mut visibility_component: ComponentRefMut<'_, Visibility> = context.world.get_entity_component_mut(debug_entity).unwrap();
-            visibility_component.value = !visibility_component.value;
+            change_visibilty(context, debug_entity);
         }
     }
 }
 
-fn check_player_border_collision(context: &Context, player_entity: Entity) {
-    let mut border_query: Query = Query::new(&context.world).with::<Border>();
-    let borders_entities: Vec<Entity> = border_query.entities_with_components().unwrap();
+fn change_visibilty(context: &Context, entity: &Entity) {
+    let mut visibility_component: ComponentRefMut<'_, Visibility> = context.world.get_entity_component_mut(entity).unwrap();
+    visibility_component.value = !visibility_component.value;
+}
+
+fn check_player_collisions(context: &mut Context, player_entity: Entity) {
+    if check_player_border_collision(context, player_entity) || check_player_opponent_collision(context, player_entity) {
+        eprintln!("crash!");
+        save_highscore_time(context);
+        reset_score(context);
+    }
+}
+
+fn reset_score(context: &Context) {
+    let mut score_time: ResourceRefMut<'_, ScoreTime> = context.world.get_resource_mut::<ScoreTime>().unwrap();
+    score_time.start_time = Instant::now();
+    score_time.current_time = Duration::ZERO;
+}
+
+fn check_player_border_collision(context: &mut Context, player_entity: Entity) -> bool {
+    let borders_entities: Vec<Entity> = {
+        let mut border_query: Query = Query::new(&context.world).with::<Border>();
+        border_query.entities_with_components().unwrap()
+    };
 
     let player_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(&player_entity).unwrap();
+    let mut collides: bool = false;
 
     for border in &borders_entities {
         let border_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(border).unwrap();
-
         if Collision::check(CollisionAlgorithm::Aabb, &player_collision, &border_collision) {
-            eprintln!("crash!");
+            collides = true;
+            break;
         }
     }
+    return collides;
 }
 
-fn check_player_opponent_collision(context: &Context, player_entity: Entity) {
+fn check_player_opponent_collision(context: &Context, player_entity: Entity) -> bool {
     let mut opponents_query: Query = Query::new(&context.world).with::<OpponentCar>();
     let opponents_entities: Vec<Entity> = opponents_query.entities_with_components().unwrap();
 
     let player_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(&player_entity).unwrap();
+    let mut collides: bool = false;
 
     for opponent in &opponents_entities {
         let opponent_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(opponent).unwrap();
 
         if Collision::check(CollisionAlgorithm::Aabb, &player_collision, &opponent_collision) {
-            eprintln!("crash!");
+            collides = true;
+            break;
         }
     }
+    return collides;
 }
 
 fn handle_opponents_movement(context: &mut Context) {
