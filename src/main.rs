@@ -1,11 +1,12 @@
 use lotus_engine::*;
 use rand::{rngs::ThreadRng, seq::IndexedRandom, Rng};
-use std::{time::Duration, vec};
+use std::time::{Duration, Instant};
+use std::vec;
 
-#[derive(Clone, Component)]
+#[derive(Component)]
 pub struct MainCar();
 
-#[derive(Clone, Component)]
+#[derive(Component)]
 pub struct OpponentCar();
 
 #[derive(Component)]
@@ -14,10 +15,13 @@ pub struct Border();
 #[derive(Component)]
 pub struct DebugComponent();
 
-#[derive(Clone, Component)]
+#[derive(Component)]
 pub struct Background();
 
-#[derive(Clone, Resource)]
+#[derive(Component)]
+pub struct TimeComponent();
+
+#[derive(Resource)]
 pub struct CarSpawnTimer(pub Timer);
 
 impl Default for CarSpawnTimer {
@@ -26,14 +30,22 @@ impl Default for CarSpawnTimer {
     }
 }
 
-//#[derive(Resource)]
-//pub struct ScoreTimer(pub Timer);
-//
-//impl Default for ScoreTimer {
-//    fn default() -> Self {
-//        return Self(Timer::new(TimerType::Once, Duration::new));
-//    }
-//}
+#[derive(Resource)]
+pub struct ScoreTime {
+    start_time: Instant,
+    current_time: Duration,
+    paused: bool,
+}
+
+impl Default for ScoreTime {
+    fn default() -> Self {
+        return Self{
+            start_time: Instant::now(),
+            current_time: Duration::ZERO,
+            paused: false
+        }
+    }
+}
 
 
 #[derive(Clone, Resource)]
@@ -49,7 +61,7 @@ impl Default for CarSprites {
     }
 }
 
-#[derive(Clone, Resource)]
+#[derive(Resource)]
 pub struct BackgroundTileCounter(pub i32);
 
 your_game!(
@@ -75,16 +87,24 @@ your_game!(
 fn setup(context: &mut Context) {
     let white_lancer_sprite: Sprite = Sprite::new("sprites/64x64/cars/white-lancer.png".to_string());
 
-    let border_left_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED);
-    let border_right_shape: Shape = Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED);
+    context.commands.add_resources(vec![
+        Box::new(ScoreTime::default()),
+        Box::new(CarSpawnTimer::default()),
+        Box::new(CarSprites::default()),
+        Box::new(BackgroundTileCounter(0))
+    ]);
 
-    //let test: Shape = Shape::new(Orientation::Horizontal, GeometryType::Square, Color::RED);
-    //context.commands.spawn(
-    //    vec![
-    //        Box::new(test),
-    //        Box::new(Transform::new(Vector2::new(0.0, 1.0), 0.0, Vector2::new(0.01, 0.01)))
-    //    ]
-    //);
+    // Player
+    context.commands.spawn(
+        vec![
+            Box::new(white_lancer_sprite),
+            Box::new(Transform::new(Vector2::new(0.0, -0.5), 0.0, Vector2::new(0.08, 0.08))),
+            Box::new(MainCar()),
+            Box::new(Velocity::new(Vector2::new(1.0, 1.0))),
+            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),
+            Box::new(DrawOrder(3))
+        ]
+    );
 
     // Background Tiles
     context.commands.spawn(
@@ -112,26 +132,10 @@ fn setup(context: &mut Context) {
         ]
     );
 
-    context.commands.add_resources(vec![
-        Box::new(CarSpawnTimer::default()),
-        Box::new(CarSprites::default()),
-        Box::new(BackgroundTileCounter(0))
-    ]);
-
+    // Borders
     context.commands.spawn(
         vec![
-            Box::new(white_lancer_sprite),
-            Box::new(Transform::new(Vector2::new(0.0, -0.5), 0.0, Vector2::new(0.08, 0.08))),
-            Box::new(MainCar()),
-            Box::new(Velocity::new(Vector2::new(1.0, 1.0))),
-            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),
-            Box::new(DrawOrder(3))
-        ]
-    );
-
-    context.commands.spawn(
-        vec![
-            Box::new(border_left_shape),
+            Box::new(Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED)),
             Box::new(Transform::new(Vector2::new(0.5, 0.0), 0.0, Vector2::new(0.01, 5.0))),
             Box::new(Border()),
             Box::new(DebugComponent()),
@@ -140,10 +144,9 @@ fn setup(context: &mut Context) {
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
         ]
     );
-
     context.commands.spawn(
         vec![
-            Box::new(border_right_shape),
+            Box::new(Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED)),
             Box::new(Transform::new(Vector2::new(-0.5, 0.0), 0.0, Vector2::new(0.01, 5.0))),
             Box::new(Border()),
             Box::new(DebugComponent()),
@@ -152,6 +155,43 @@ fn setup(context: &mut Context) {
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
         ]
     );
+
+    // Score screen
+    let score_text: Text = Text::new(
+        //Font::new(Fonts::UnderdogRegular.get_path(), 40.0),
+        Font::new("fonts/x12y16pxMaruMonica.ttf".to_string(), 40.0),
+        Vector2::new(0.07, 0.07),
+        Color::WHITE,
+        "SCORE".to_string()
+    );
+    let score_time: Text = Text::new(
+        //Font::new(Fonts::UnderdogRegular.get_path(), 40.0),
+        Font::new("fonts/x12y16pxMaruMonica.ttf".to_string(), 40.0),
+        Vector2::new(0.053, 0.14),
+        Color::WHITE,
+        "00:00:000".to_string()
+    );
+    context.commands.spawn(
+        vec![
+            Box::new(Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::BLACK)),
+            Box::new(Transform::new(Vector2::new(-1.3, 0.0), 0.0, Vector2::new(0.6, 4.0))),
+            Box::new(DrawOrder(4))
+        ]
+    );
+    context.commands.spawn(
+        vec![
+            Box::new(score_text),
+            Box::new(DrawOrder(5))
+        ]
+    );
+    context.commands.spawn(
+        vec![
+            Box::new(score_time),
+            Box::new(TimeComponent()),
+            Box::new(DrawOrder(5))
+        ]
+    );
+    
 }
 
 fn update(context: &mut Context) {
@@ -160,6 +200,7 @@ fn update(context: &mut Context) {
         player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
 
+    update_score_time(context);
     handle_background_tiles(context);
     move_background(context);
     handle_input(context, player_entity);
@@ -167,6 +208,28 @@ fn update(context: &mut Context) {
     check_player_border_collision(context, player_entity);
     check_player_opponent_collision(context, player_entity);
     spawn_opponent(context);
+}
+
+fn update_score_time(context: &mut Context) {
+    let mut score_time: ResourceRefMut<ScoreTime> = context.world.get_resource_mut::<ScoreTime>().unwrap();
+    if score_time.paused {
+       return; 
+    }
+    
+    let time_entity: Entity = {
+        let mut time_entity_query: Query = Query::new(&context.world).with::<TimeComponent>();
+        time_entity_query.entities_with_components().unwrap().first().unwrap().clone()
+    };
+
+    let mut text_component: ComponentRefMut<'_, Text> = context.world.get_entity_component_mut::<Text>(&time_entity).unwrap();
+    score_time.current_time = score_time.start_time.elapsed();
+    let millis: u128 = score_time.current_time.as_millis()%1000;
+    let seconds: u32 = ((score_time.current_time.as_millis()/1000)%60) as u32;
+    let minutes: u32 = (score_time.current_time.as_millis()/60000) as u32;
+
+    text_component.content = (format!("{:02}:{:02}:{:03}", minutes, seconds, millis)).to_string();
+    let text_renderer: TextRenderer = TextRenderer::new(&context.render_state, &text_component);
+    context.render_state.text_renderers.insert(time_entity.0, text_renderer);
 }
 
 fn handle_input(context: &Context, player_entity: Entity) {
