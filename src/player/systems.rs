@@ -1,0 +1,101 @@
+use lotus_engine::*;
+
+use crate::player::components::*;
+
+use crate::cars::components::OpponentCar;
+use crate::common::components::Border;
+use crate::score::systems::{save_highscore_time, reset_score};
+
+const CAR_SPAWN_Y: f32 = -0.5;
+const CAR_ROTATION: f32 = 10.0;
+const SPRITE_PATH: &str = "sprites/64x64/cars/white-lancer.png";
+
+pub fn spawn_player(context: &mut Context) {
+    context.commands.spawn(
+        vec![
+            Box::new(Sprite::new(SPRITE_PATH.to_string())),
+            Box::new(Transform::new(Vector2::new(0.0, CAR_SPAWN_Y), 0.0, Vector2::new(0.08, 0.08))),
+            Box::new(MainCar()),
+            Box::new(Velocity::new(Vector2::new(1.0, 1.0))),
+            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),
+            Box::new(DrawOrder(3))
+        ]
+    );
+}
+
+pub fn move_player(context: &Context) {
+    let player_entity: Entity = {
+        let mut player_entity_query: Query = Query::new(&context.world).with::<MainCar>();
+        player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
+    };
+    let input: ResourceRef<'_, Input> = context.world.get_resource::<Input>().unwrap();
+    let mut transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&player_entity).unwrap();
+    let car_speed: ComponentRef<'_, Velocity> = context.world.get_entity_component::<Velocity>(&player_entity).unwrap();
+
+    if input.is_key_pressed(PhysicalKey::Code(KeyCode::KeyA)) {
+        let move_left: f32 = transform.position.x - car_speed.value.x * context.delta;
+        transform.set_position_x(&context.render_state, move_left);
+        transform.set_rotation(&context.render_state, CAR_ROTATION);
+    }
+
+    if input.is_key_pressed(PhysicalKey::Code(KeyCode::KeyD)) {
+        let move_right: f32 = transform.position.x + car_speed.value.x * context.delta;
+        transform.set_position_x(&context.render_state, move_right);
+        transform.set_rotation(&context.render_state, -CAR_ROTATION);
+    }
+
+    if input.is_key_released(PhysicalKey::Code(KeyCode::KeyA))
+    || input.is_key_released(PhysicalKey::Code(KeyCode::KeyD)) {
+        transform.set_rotation(&context.render_state, 0.0);
+    }
+    
+}
+
+pub fn check_player_collisions(context: &mut Context) {
+    let player_entity: Entity = {
+        let mut player_entity_query: Query = Query::new(&context.world).with::<MainCar>();
+        player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
+    };
+    if check_player_border_collision(context, player_entity) || check_player_opponent_collision(context, player_entity) {
+        eprintln!("crash!");
+        save_highscore_time(context);
+        reset_score(context);
+    }
+}
+
+fn check_player_border_collision(context: &mut Context, player_entity: Entity) -> bool {
+    let borders_entities: Vec<Entity> = {
+        let mut border_query: Query = Query::new(&context.world).with::<Border>();
+        border_query.entities_with_components().unwrap()
+    };
+
+    let player_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(&player_entity).unwrap();
+    let mut collides: bool = false;
+
+    for border in &borders_entities {
+        let border_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(border).unwrap();
+        if Collision::check(CollisionAlgorithm::Aabb, &player_collision, &border_collision) {
+            collides = true;
+            break;
+        }
+    }
+    return collides;
+}
+
+fn check_player_opponent_collision(context: &Context, player_entity: Entity) -> bool {
+    let mut opponents_query: Query = Query::new(&context.world).with::<OpponentCar>();
+    let opponents_entities: Vec<Entity> = opponents_query.entities_with_components().unwrap();
+
+    let player_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(&player_entity).unwrap();
+    let mut collides: bool = false;
+
+    for opponent in &opponents_entities {
+        let opponent_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(opponent).unwrap();
+
+        if Collision::check(CollisionAlgorithm::Aabb, &player_collision, &opponent_collision) {
+            collides = true;
+            break;
+        }
+    }
+    return collides;
+}
