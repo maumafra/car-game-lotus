@@ -3,11 +3,16 @@ use lotus_engine::*;
 use crate::background::components::*;
 use crate::background::resources::*;
 
+const BACKGROUND_VELOCITY: f32 = -3.0;
+
 pub fn spawn_background_tiles(context: &mut Context) {
     context.commands.spawn(
         vec![
             Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
-            Box::new(Transform::new(Vector2::new(0.005, 0.0), 0.0, Vector2::new(1.55, 1.0))),
+            Box::new(Transform::new(
+                Position::new(Vector2::new(0.005, 0.0), Strategy::Normalized),
+                0.0,
+                Scale::new(Vector2::new(1.55, 1.0), Strategy::Normalized))),
             Box::new(Background()),
             Box::new(DrawOrder(0))
         ]
@@ -15,7 +20,10 @@ pub fn spawn_background_tiles(context: &mut Context) {
     context.commands.spawn(
         vec![
             Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
-            Box::new(Transform::new(Vector2::new(0.005, 2.0), 0.0, Vector2::new(1.55, 1.0))),
+            Box::new(Transform::new(
+                Position::new(Vector2::new(0.005, 2.0), Strategy::Normalized),
+                0.0,
+                Scale::new(Vector2::new(1.55, 1.0), Strategy::Normalized))),
             Box::new(Background()),
             Box::new(DrawOrder(0))
         ]
@@ -23,7 +31,10 @@ pub fn spawn_background_tiles(context: &mut Context) {
     context.commands.spawn(
         vec![
             Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
-            Box::new(Transform::new(Vector2::new(0.005, 4.0), 0.0, Vector2::new(1.55, 1.0))),
+            Box::new(Transform::new(
+                Position::new(Vector2::new(0.005, 4.0), Strategy::Normalized),
+                0.0,
+                Scale::new(Vector2::new(1.55, 1.0), Strategy::Normalized))),
             Box::new(Background()),
             Box::new(DrawOrder(0))
         ]
@@ -63,7 +74,7 @@ pub fn move_background(context: &Context) {
     for backgound in background_entities {
         let mut bg_transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&backgound).unwrap();
 
-        let move_down: f32 = bg_transform.get_position().y - 3.0 * context.delta;
+        let move_down: f32 = bg_transform.get_position().y + BACKGROUND_VELOCITY * context.delta;
         bg_transform.set_position_y(&context.render_state, move_down);
     }
 }

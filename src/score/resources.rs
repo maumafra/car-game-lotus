@@ -4,16 +4,14 @@ use std::time::{Duration, Instant};
 #[derive(Resource)]
 pub struct ScoreTime {
     pub start_time: Instant,
-    pub current_time: Duration,
-    pub paused: bool,
+    pub current_time: Duration
 }
 
 impl Default for ScoreTime {
     fn default() -> Self {
         return Self{
             start_time: Instant::now(),
-            current_time: Duration::ZERO,
-            paused: false
+            current_time: Duration::ZERO
         }
     }
 }

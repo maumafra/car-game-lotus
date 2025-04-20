@@ -39,6 +39,7 @@ your_game!(
 );
 
 fn setup(context: &mut Context) {
+    context.game_loop_listener.fps_cap(144);
     context.commands.add_resources(vec![
         Box::new(GameState::default()),
         Box::new(ScoreTime::default()),
@@ -55,6 +56,7 @@ fn setup(context: &mut Context) {
 }
 
 fn update(context: &mut Context) {
+    eprintln!("{:?}", context.game_loop_listener.current_fps);
     handle_input(context);
     if context.world.get_resource::<GameState>().unwrap().0 == GameStateEnum::Running {
         move_player(context);

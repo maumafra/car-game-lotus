@@ -14,7 +14,10 @@ pub fn spawn_player(context: &mut Context) {
     context.commands.spawn(
         vec![
             Box::new(Sprite::new(SPRITE_PATH.to_string())),
-            Box::new(Transform::new(Vector2::new(0.0, CAR_SPAWN_Y), 0.0, Vector2::new(0.08, 0.08))),
+            Box::new(Transform::new(
+                Position::new(Vector2::new(0.0, CAR_SPAWN_Y), Strategy::Normalized),
+                0.0,
+                Scale::new(Vector2::new(0.08, 0.08), Strategy::Normalized))),
             Box::new(MainCar()),
             Box::new(Velocity::new(Vector2::new(1.0, 1.0))),
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),
@@ -33,13 +36,13 @@ pub fn move_player(context: &Context) {
     let car_speed: ComponentRef<'_, Velocity> = context.world.get_entity_component::<Velocity>(&player_entity).unwrap();
 
     if input.is_key_pressed(PhysicalKey::Code(KeyCode::KeyA)) {
-        let move_left: f32 = transform.position.x - car_speed.value.x * context.delta;
+        let move_left: f32 = transform.position.x - car_speed.x * context.delta;
         transform.set_position_x(&context.render_state, move_left);
         transform.set_rotation(&context.render_state, CAR_ROTATION);
     }
 
     if input.is_key_pressed(PhysicalKey::Code(KeyCode::KeyD)) {
-        let move_right: f32 = transform.position.x + car_speed.value.x * context.delta;
+        let move_right: f32 = transform.position.x + car_speed.x * context.delta;
         transform.set_position_x(&context.render_state, move_right);
         transform.set_rotation(&context.render_state, -CAR_ROTATION);
     }
@@ -57,7 +60,7 @@ pub fn check_player_collisions(context: &mut Context) {
         player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
     if check_player_border_collision(context, player_entity) || check_player_opponent_collision(context, player_entity) {
-        eprintln!("crash!");
+        //eprintln!("crash!");
         save_highscore_time(context);
         reset_score(context);
     }
