@@ -4,10 +4,24 @@ use rand::{rngs::ThreadRng, seq::IndexedRandom, Rng};
 use crate::cars::components::*;
 use crate::cars::resources::*;
 
+const CAR_DESPAWN: f32 = -1.3;
 const MAX_SPAWN_VALUE: i32 = 5;
 const MIN_SPAWN_VALUE: i32 = 1;
-const SPAWN_RANGE_X: f32 = 0.75;
-const CAR_DESPAWN_Y: f32 = -1.3;
+const SPAWN_OFFSET: f32 = 0.9;
+const SPAWN_RANGE: f32 = 0.75;
+
+pub fn reset_cars(context: &mut Context) {
+    let opponents_entities: Vec<Entity> = {
+        let mut opponents_query: Query = Query::new(&context.world).with::<OpponentCar>();
+        opponents_query.entities_with_components().unwrap()
+    };
+    if opponents_entities.is_empty() {
+        return;
+    }
+    for opponent in opponents_entities {
+        context.commands.despawn(opponent);
+    }
+}
 
 pub fn handle_cars_movement(context: &mut Context) {
     let opponents_entities: Vec<Entity> = {
@@ -18,7 +32,7 @@ pub fn handle_cars_movement(context: &mut Context) {
     for opponent in opponents_entities {
         let mut op_transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&opponent).unwrap();
 
-        if op_transform.get_position().y < CAR_DESPAWN_Y {
+        if op_transform.get_position().y < CAR_DESPAWN {
             //eprintln!("opponent despawned: {:?}", opponent.0);
             context.commands.despawn(opponent);
         } else {
@@ -53,7 +67,7 @@ pub fn spawn_cars(context: &mut Context) {
             //eprintln!("lane_number: {:?}",lane_number);
 
             let car_sprite: &String = car_sprites.0.choose(&mut thread_rng).unwrap();
-            let car_offset: f32 = thread_rng.random_range(-0.9..=0.9);
+            let car_offset: f32 = thread_rng.random_range(-SPAWN_OFFSET..=SPAWN_OFFSET);
             let spawn_position: Vector2<f32> = calculate_car_spawn_position(lane_number, car_offset);
             spawn_car(context, spawn_position, car_sprite);
         }
@@ -81,7 +95,7 @@ fn calculate_car_spawn_position(lane_number: i32, car_offset: f32) -> Vector2<f3
     let lane_number_float: f32 = lane_number as f32;
     // spawn_range represents the total range in x axis which cars can be spawned,
     // for example: with spawn_range = 0.8, a car can be spawned between x = -0.4 and x = 0.4
-    let spawn_range: f32 = SPAWN_RANGE_X;
+    let spawn_range: f32 = SPAWN_RANGE;
 
     // f(n) = an + b
     // with 'n' as lane number (which varies from 1..6)

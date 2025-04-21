@@ -1,5 +1,6 @@
 use lotus_engine::*;
 
+use crate::common::resources::{GameState, GameStateEnum};
 use crate::player::components::*;
 
 use crate::cars::components::OpponentCar;
@@ -26,32 +27,32 @@ pub fn spawn_player(context: &mut Context) {
     );
 }
 
-pub fn move_player(context: &Context) {
+pub fn reset_player(context: &Context) {
     let player_entity: Entity = {
         let mut player_entity_query: Query = Query::new(&context.world).with::<MainCar>();
         player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
-    let input: ResourceRef<'_, Input> = context.world.get_resource::<Input>().unwrap();
+    let mut transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&player_entity).unwrap();
+    transform.set_position_x(&context.render_state, 0.0);
+}
+
+pub fn move_player(context: &Context, direction: f32) {
+    let game_state: GameStateEnum = context.world.get_resource::<GameState>().unwrap().0.clone();
+    if game_state != GameStateEnum::Running {
+        return;
+    }
+    let player_entity: Entity = {
+        let mut player_entity_query: Query = Query::new(&context.world).with::<MainCar>();
+        player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
+    };
     let mut transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&player_entity).unwrap();
     let car_speed: ComponentRef<'_, Velocity> = context.world.get_entity_component::<Velocity>(&player_entity).unwrap();
 
-    if input.is_key_pressed(PhysicalKey::Code(KeyCode::KeyA)) {
-        let move_left: f32 = transform.position.x - car_speed.x * context.delta;
-        transform.set_position_x(&context.render_state, move_left);
-        transform.set_rotation(&context.render_state, CAR_ROTATION);
-    }
+    let movement: f32 = transform.position.x + direction * car_speed.x * context.delta;
+    let rotation: f32 = - CAR_ROTATION * direction;
 
-    if input.is_key_pressed(PhysicalKey::Code(KeyCode::KeyD)) {
-        let move_right: f32 = transform.position.x + car_speed.x * context.delta;
-        transform.set_position_x(&context.render_state, move_right);
-        transform.set_rotation(&context.render_state, -CAR_ROTATION);
-    }
-
-    if input.is_key_released(PhysicalKey::Code(KeyCode::KeyA))
-    || input.is_key_released(PhysicalKey::Code(KeyCode::KeyD)) {
-        transform.set_rotation(&context.render_state, 0.0);
-    }
-    
+    transform.set_position_x(&context.render_state, movement);
+    transform.set_rotation(&context.render_state, rotation);
 }
 
 pub fn check_player_collisions(context: &mut Context) {
@@ -61,6 +62,7 @@ pub fn check_player_collisions(context: &mut Context) {
     };
     if check_player_border_collision(context, player_entity) || check_player_opponent_collision(context, player_entity) {
         //eprintln!("crash!");
+        // TODO função reset_game no commons pra resetar o estado do jogo, incluir entao nessa nova função as duas abaixo
         save_highscore_time(context);
         reset_score(context);
     }

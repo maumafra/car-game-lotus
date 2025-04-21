@@ -10,4 +10,7 @@ pub struct DebugComponent();
 pub struct Menu();
 
 #[derive(Component)]
-pub struct GameRunning();
+pub struct Pause();
+
+#[derive(Component)]
+pub struct PauseSelection();

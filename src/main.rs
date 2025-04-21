@@ -46,25 +46,32 @@ fn setup(context: &mut Context) {
         Box::new(Highscore::default()),
         Box::new(CarSpawnTimer::default()),
         Box::new(CarSprites::default()),
-        Box::new(BackgroundTileCounter(0))
+        Box::new(BackgroundTileCounter(0)),
+        Box::new(PauseSelectionCounter(0))
     ]);
     spawn_menu(context);
     spawn_player(context);
     spawn_background_tiles(context);
     spawn_borders(context);
     spawn_score_screen(context);
+    spawn_pause_menu(context);
 }
 
 fn update(context: &mut Context) {
-    eprintln!("{:?}", context.game_loop_listener.current_fps);
+    let game_state: GameStateEnum = context.world.get_resource::<GameState>().unwrap().0.clone();
+    //eprintln!("{:?}", context.game_loop_listener.current_fps);
     handle_input(context);
-    if context.world.get_resource::<GameState>().unwrap().0 == GameStateEnum::Running {
-        move_player(context);
+    if game_state == GameStateEnum::Running {
+        //move_player(context);
         update_score_time(context);
         handle_background_tiles(context);
         move_background(context);
         handle_cars_movement(context);
         check_player_collisions(context);
         spawn_cars(context);
+    } else if game_state == GameStateEnum::Paused {
+        //pause_screen(context);
+    } else if game_state == GameStateEnum::GameOver {
+
     }
 }

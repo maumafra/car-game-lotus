@@ -41,6 +41,23 @@ pub fn spawn_background_tiles(context: &mut Context) {
     );
 }
 
+pub fn reset_background(context: &Context) {
+    let background_entities: Vec<Entity> = {
+        let mut background_query: Query = Query::new(&context.world).with::<Background>();
+        background_query.entities_with_components().unwrap()
+    };
+    let tile_counter: ResourceRef<'_, BackgroundTileCounter> = context.world.get_resource::<BackgroundTileCounter>().unwrap();
+    let mut tile_index: usize = tile_counter.0 as usize;
+    let mut y: f32 = 0.0;
+    for _ in vec![1, 2, 3] {
+        let bg_entity: Entity = background_entities.get(tile_index).unwrap().clone();
+        let mut bg_transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&bg_entity).unwrap();
+        bg_transform.set_position_y(&context.render_state, y);
+        y += 2.0;
+        tile_index = (tile_index+1)%3;
+    }
+}
+
 pub fn handle_background_tiles(context: &Context) {
     let background_entities: Vec<Entity> = {
         let mut background_query: Query = Query::new(&context.world).with::<Background>();

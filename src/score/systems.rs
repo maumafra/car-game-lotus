@@ -1,34 +1,34 @@
 use lotus_engine::*;
 use std::time::{Duration, Instant};
 
+use crate::common::systems::MARU_MONICA_FONT_PATH;
 use crate::score::components::*;
 use crate::score::resources::*;
 
+
+const TEXT_DRAW_ORDER: u32 = 5;
+
 pub fn spawn_score_screen(context: &mut Context) {
     let score_text: Text = Text::new(
-        //Font::new(Fonts::UnderdogRegular.get_path(), 40.0),
-        Font::new("fonts/x12y16pxMaruMonica.ttf".to_string(), 40.0),
+        Font::new(MARU_MONICA_FONT_PATH.to_string(), 40.0),
         Position::new(Vector2::new(0.07, 0.07), Strategy::Pixelated),
         Color::WHITE,
-        "SCORE".to_string()
+        "score".to_string()
     );
     let score_time: Text = Text::new(
-        //Font::new(Fonts::UnderdogRegular.get_path(), 40.0),
-        Font::new("fonts/x12y16pxMaruMonica.ttf".to_string(), 40.0),
+        Font::new(MARU_MONICA_FONT_PATH.to_string(), 40.0),
         Position::new(Vector2::new(0.053, 0.14), Strategy::Pixelated),
         Color::WHITE,
         "00:00:000".to_string()
     );
     let highscore_text: Text = Text::new(
-        //Font::new(Fonts::UnderdogRegular.get_path(), 40.0),
-        Font::new("fonts/x12y16pxMaruMonica.ttf".to_string(), 40.0),
-        Position::new(Vector2::new(0.04, 0.28), Strategy::Pixelated),
+        Font::new(MARU_MONICA_FONT_PATH.to_string(), 40.0),
+        Position::new(Vector2::new(0.016, 0.28), Strategy::Pixelated),
         Color::ORANGE,
-        "HIGHSCORE".to_string()
+        "> highscore <".to_string()
     );
     let highscore_time: Text = Text::new(
-        //Font::new(Fonts::UnderdogRegular.get_path(), 40.0),
-        Font::new("fonts/x12y16pxMaruMonica.ttf".to_string(), 40.0),
+        Font::new(MARU_MONICA_FONT_PATH.to_string(), 40.0),
         Position::new(Vector2::new(0.053, 0.35), Strategy::Pixelated),
         Color::ORANGE,
         "00:00:000".to_string()
@@ -40,33 +40,33 @@ pub fn spawn_score_screen(context: &mut Context) {
                 Position::new(Vector2::new(-1.3, 0.0), Strategy::Normalized),
                 0.0,
                 Scale::new(Vector2::new(0.6, 4.0), Strategy::Normalized))),
-            Box::new(DrawOrder(4))
+            Box::new(DrawOrder(TEXT_DRAW_ORDER-1))
         ]
     );
     context.commands.spawn(
         vec![
             Box::new(score_text),
-            Box::new(DrawOrder(5))
+            Box::new(DrawOrder(TEXT_DRAW_ORDER))
         ]
     );
     context.commands.spawn(
         vec![
             Box::new(score_time),
             Box::new(TimeComponent()),
-            Box::new(DrawOrder(5))
+            Box::new(DrawOrder(TEXT_DRAW_ORDER))
         ]
     );
     context.commands.spawn(
         vec![
             Box::new(highscore_text),
-            Box::new(DrawOrder(5))
+            Box::new(DrawOrder(TEXT_DRAW_ORDER))
         ]
     );
     context.commands.spawn(
         vec![
             Box::new(highscore_time),
             Box::new(TimeComponent()),
-            Box::new(DrawOrder(5))
+            Box::new(DrawOrder(TEXT_DRAW_ORDER))
         ]
     );
 }

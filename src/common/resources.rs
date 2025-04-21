@@ -13,5 +13,9 @@ impl Default for GameState {
 pub enum GameStateEnum {
     Menu,
     Paused,
-    Running
+    Running,
+    GameOver
 }
+
+#[derive(Resource)]
+pub struct PauseSelectionCounter(pub u32);
