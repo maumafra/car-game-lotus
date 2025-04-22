@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 use lotus_engine::*;
 use std::vec;
 
