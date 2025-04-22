@@ -21,7 +21,7 @@ pub fn spawn_player(context: &mut Context) {
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.0, CAR_SPAWN_Y), Strategy::Normalized),
                 0.0,
-                Scale::new(Vector2::new(0.08, 0.08), Strategy::Normalized))),
+                Vector2::new(0.08, 0.08))),
             Box::new(MainCar()),
             Box::new(Velocity::new(Vector2::new(1.0, 1.0))),
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),

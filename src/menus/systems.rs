@@ -130,7 +130,7 @@ pub fn spawn_main_menu(context: &mut Context) {
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.0, 0.0), Strategy::Normalized),
                 0.0,
-                Scale::new(Vector2::new(1.6, 1.0), Strategy::Normalized))),
+                Vector2::new(1.6, 1.0))),
             Box::new(Menu()),
             Box::new(DrawOrder(MENU_DRAW_ORDER))
         ]
@@ -251,7 +251,7 @@ fn spawn_right_menu(context: &mut Context) {
             Box::new(Transform::new(
                 Position::new(Vector2::new(1.3, 0.0), Strategy::Normalized),
                 0.0,
-                Scale::new(Vector2::new(0.6, 4.0), Strategy::Normalized))),
+                Vector2::new(0.6, 4.0))),
             Box::new(Pause()),
             Box::new(GameOver()),
             Box::new(Visibility(false)),

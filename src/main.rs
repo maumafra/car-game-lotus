@@ -62,7 +62,7 @@ fn setup(context: &mut Context) {
 
 fn update(context: &mut Context) {
     let game_state: GameStateEnum = context.world.get_resource::<GameState>().unwrap().0.clone();
-    //eprintln!("{:?}", context.game_loop_listener.current_fps);
+    context.commands.show_fps(context.game_loop_listener.current_fps);
     handle_input(context);
     if game_state == GameStateEnum::Running {
         update_score_time(context);

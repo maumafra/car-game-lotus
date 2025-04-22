@@ -120,7 +120,7 @@ pub fn spawn_borders(context: &mut Context) {
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.5, 0.0), Strategy::Normalized),
                 0.0,
-                Scale::new(Vector2::new(0.01, 5.0), Strategy::Normalized))),
+                Vector2::new(0.01, 5.0))),
             Box::new(Border()),
             Box::new(DebugComponent()),
             Box::new(Visibility(false)),
@@ -134,7 +134,7 @@ pub fn spawn_borders(context: &mut Context) {
             Box::new(Transform::new(
                 Position::new(Vector2::new(-0.5, 0.0), Strategy::Normalized),
                 0.0,
-                Scale::new(Vector2::new(0.01, 5.0), Strategy::Normalized))),
+                Vector2::new(0.01, 5.0))),
             Box::new(Border()),
             Box::new(DebugComponent()),
             Box::new(Visibility(false)),

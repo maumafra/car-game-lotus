@@ -39,7 +39,7 @@ pub fn spawn_score_screen(context: &mut Context) {
             Box::new(Transform::new(
                 Position::new(Vector2::new(-1.3, 0.0), Strategy::Normalized),
                 0.0,
-                Scale::new(Vector2::new(0.6, 4.0), Strategy::Normalized))),
+                Vector2::new(0.6, 4.0))),
             Box::new(DrawOrder(TEXT_DRAW_ORDER-1))
         ]
     );
