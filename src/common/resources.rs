@@ -27,3 +27,5 @@ impl Default for GameAudio {
 }
 
 pub const MARU_MONICA_FONT_PATH: &str = "fonts/x12y16pxMaruMonica.ttf";
+pub const HEIGHT: f32 = 600.0;
+pub const WIDTH: f32 = 960.0;

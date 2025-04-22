@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"]
+//#![windows_subsystem = "windows"]
 use lotus_engine::*;
 use std::vec;
 
@@ -23,12 +23,12 @@ use score::systems::*;
 
 your_game!(
     WindowConfiguration {
-        icon_path: "sprites/64x64/cars/white-lancer.png".to_string(),
-        title: "cyberlancer: made with lotus!".to_string(),
+        icon_path: "sprites/48x48/cars/white-lancer.png".to_string(),
+        title: "cyberlancer: neon rush".to_string(),
         background_color: Some(Color::BLACK),
         background_image_path: None,
-        width: 960.0,
-        height: 600.0,
+        width: WIDTH as f64,
+        height: HEIGHT as f64,
         position_x: 200.0,
         position_y: 150.0,
         resizable: false,

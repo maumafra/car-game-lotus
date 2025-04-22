@@ -12,7 +12,7 @@ pub fn spawn_background_tiles(context: &mut Context) {
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.005, 0.0), Strategy::Normalized),
                 0.0,
-                Vector2::new(1.55, 1.0))),
+                Vector2::new(1.0, 1.0))),
             Box::new(Background()),
             Box::new(DrawOrder(0))
         ]
@@ -23,7 +23,7 @@ pub fn spawn_background_tiles(context: &mut Context) {
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.005, 2.0), Strategy::Normalized),
                 0.0,
-                Vector2::new(1.55, 1.0))),
+                Vector2::new(1.0, 1.0))),
             Box::new(Background()),
             Box::new(DrawOrder(0))
         ]
@@ -34,7 +34,7 @@ pub fn spawn_background_tiles(context: &mut Context) {
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.005, 4.0), Strategy::Normalized),
                 0.0,
-                Vector2::new(1.55, 1.0))),
+                Vector2::new(1.0, 1.0))),
             Box::new(Background()),
             Box::new(DrawOrder(0))
         ]

@@ -103,7 +103,7 @@ fn spawn_car(context: &mut Context, spawn_position: Vector2<f32>, car_srpite_pat
             Box::new(Transform::new(
                 Position::new(spawn_position, Strategy::Normalized),
                 0.0,
-                Vector2::new(0.08, 0.08))),
+                Vector2::new(1.0, 1.0))),
             Box::new(OpponentCar()),
             Box::new(Velocity::new(Vector2::new(0.0, 2.0))),
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),

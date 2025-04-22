@@ -166,32 +166,35 @@ pub fn change_visibilty(context: &Context, entity: &Entity) {
 }
 
 pub fn spawn_borders(context: &mut Context) {
+    let spawn_y: f32 = (context.window_configuration.height * (3.0/4.0)) as f32;
     context.commands.spawn(
         vec![
-            Box::new(Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED)),
+            Box::new(Shape::new(Orientation::Horizontal, GeometryType::Square, Color::RED)),
             Box::new(Transform::new(
-                Position::new(Vector2::new(0.5, 0.0), Strategy::Normalized),
+                Position::new(Vector2::new(324.0, spawn_y), Strategy::Pixelated),
+                //Position::new(Vector2::new(0.51, 0.0), Strategy::Normalized),
                 0.0,
-                Vector2::new(0.01, 5.0))),
+                Vector2::new(0.005, 1.0))),
             Box::new(Border()),
             Box::new(DebugComponent()),
             Box::new(Visibility(false)),
             Box::new(DrawOrder(4)),
-            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
+            Box::new(Collision::new(Collider::new_simple(GeometryType::Square)))
         ]
     );
     context.commands.spawn(
         vec![
-            Box::new(Shape::new(Orientation::Horizontal, GeometryType::Rectangle, Color::RED)),
+            Box::new(Shape::new(Orientation::Horizontal, GeometryType::Square, Color::RED)),
             Box::new(Transform::new(
-                Position::new(Vector2::new(-0.5, 0.0), Strategy::Normalized),
+                Position::new(Vector2::new(635.0, spawn_y), Strategy::Pixelated),
+                //Position::new(Vector2::new(-0.5, 0.0), Strategy::Normalized),
                 0.0,
-                Vector2::new(0.01, 5.0))),
+                Vector2::new(0.005, 1.0))),
             Box::new(Border()),
             Box::new(DebugComponent()),
             Box::new(Visibility(false)),
             Box::new(DrawOrder(4)),
-            Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
+            Box::new(Collision::new(Collider::new_simple(GeometryType::Square)))
         ]
     );
 }

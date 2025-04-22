@@ -4,7 +4,7 @@ use crate::player::components::*;
 
 use crate::cars::components::OpponentCar;
 use crate::common::components::Border;
-use crate::common::resources::{GameState, GameStateEnum, GameAudio};
+use crate::common::resources::{GameAudio, GameState, GameStateEnum};
 use crate::menus::components::GameOver;
 use crate::menus::systems::change_menu_visibility;
 use crate::score::systems::{save_highscore_time, reset_score};
@@ -12,16 +12,15 @@ use crate::score::systems::{save_highscore_time, reset_score};
 const CAR_SPAWN_Y: f32 = -0.5;
 const CAR_ROTATION: f32 = 10.0;
 const CAR_CRASH_ROTATION: f32 = 30.0;
-const SPRITE_PATH: &str = "sprites/64x64/cars/white-lancer.png";
 
 pub fn spawn_player(context: &mut Context) {
     context.commands.spawn(
         vec![
-            Box::new(Sprite::new(SPRITE_PATH.to_string())),
+            Box::new(Sprite::new("sprites/48x48/cars/white-lancer.png".to_string())),
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.0, CAR_SPAWN_Y), Strategy::Normalized),
                 0.0,
-                Vector2::new(0.08, 0.08))),
+                Vector2::new(1.0, 1.0))),
             Box::new(MainCar()),
             Box::new(Velocity::new(Vector2::new(1.0, 1.0))),
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),
@@ -83,7 +82,7 @@ pub fn check_player_collisions(context: &mut Context) {
         player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
     if check_player_border_collision(context, player_entity) || check_player_opponent_collision(context, player_entity) {
-        crash(context);
+        //crash(context);
     }
 }
 
@@ -110,6 +109,7 @@ fn check_player_border_collision(context: &mut Context, player_entity: Entity) -
     for border in &borders_entities {
         let border_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(border).unwrap();
         if Collision::check(CollisionAlgorithm::Aabb, &player_collision, &border_collision) {
+            eprintln!("crash on border!");
             collides = true;
             break;
         }
@@ -128,6 +128,7 @@ fn check_player_opponent_collision(context: &Context, player_entity: Entity) -> 
         let opponent_collision: ComponentRef<'_, Collision> = context.world.get_entity_component::<Collision>(opponent).unwrap();
 
         if Collision::check(CollisionAlgorithm::Aabb, &player_collision, &opponent_collision) {
+            eprintln!("crash on car!");
             collides = true;
             break;
         }
