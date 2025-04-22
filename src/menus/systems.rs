@@ -39,12 +39,9 @@ pub fn enter_game_over_option(context: &mut Context) {
     };
     if selection == 0 {
         change_menu_visibility::<GameOver>(context);
-        reset_game(context);
         retry(context);
     } else if selection == 1 {
         change_menu_visibility::<GameOver>(context);
-        change_menu_visibility::<Menu>(context);
-        reset_game(context);
         quit_to_menu(context);
     } else if selection == 2 {
         quit_game();
@@ -56,11 +53,16 @@ pub fn enter_pause_option(context: &mut Context) {
     if game_state != GameStateEnum::Paused {
         return;
     }
-    let selection: u32 = context.world.get_resource_mut::<PauseSelectionCounter>().unwrap().0;
+    let go_selection_entity: Entity = {
+        let mut query: Query = Query::new(&context.world).with::<PauseSelection>();
+        query.entities_with_components().unwrap().first().unwrap().clone()
+    };
+    let selection: u32 = {
+        let selection_counter: ComponentRef<'_, PauseSelection> = context.world.get_entity_component(&go_selection_entity).unwrap();
+        selection_counter.0
+    };
     if selection == 0 {
         change_menu_visibility::<Pause>(context);
-        change_menu_visibility::<Menu>(context);
-        reset_game(context);
         quit_to_menu(context);
     } else if selection == 1 {
         quit_game();
@@ -102,7 +104,7 @@ pub fn move_pause_selection(context: &mut Context, direction: i32) {
         query.entities_with_components().unwrap().first().unwrap().clone()
     };
     let selection: u32 = {
-        let mut selection_counter: ResourceRefMut<'_, PauseSelectionCounter> = context.world.get_resource_mut::<PauseSelectionCounter>().unwrap();
+        let mut selection_counter: ComponentRefMut<'_, PauseSelection> = context.world.get_entity_component_mut(&pause_selection_entity).unwrap();
         selection_counter.0 = ((selection_counter.0 as i32 + direction)%PAUSE_OPTIONS_LEN).unsigned_abs();
         selection_counter.0
     };
@@ -177,7 +179,7 @@ pub fn spawn_pause_menu(context: &mut Context) {
         vec![
             Box::new(selection),
             Box::new(Pause()),
-            Box::new(PauseSelection()),
+            Box::new(PauseSelection(0)),
             Box::new(Visibility(false)),
             Box::new(DrawOrder(MENU_DRAW_ORDER))
         ]

@@ -7,10 +7,7 @@ pub struct Menu();
 pub struct Pause();
 
 #[derive(Component)]
-pub struct PauseSelection(); // TODO Remover o resource para tratar o index por aqui
-
-//#[derive(Component)]
-//pub struct PauseSelection(pub MenuOptions)
+pub struct PauseSelection(pub u32);
 
 #[derive(Component)]
 pub struct GameOver();

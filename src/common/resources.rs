@@ -17,7 +17,4 @@ pub enum GameStateEnum {
     GameOver
 }
 
-#[derive(Resource)]
-pub struct PauseSelectionCounter(pub u32);
-
 pub const MARU_MONICA_FONT_PATH: &str = "fonts/x12y16pxMaruMonica.ttf";

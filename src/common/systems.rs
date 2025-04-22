@@ -50,7 +50,12 @@ pub fn handle_input(context: &mut Context) {
     }
 
     if input.is_key_released(PhysicalKey::Code(KeyCode::Semicolon)) {
-        set_debug_visibility(context);
+        toggle_debug_visibility(context);
+    }
+
+    if input.is_mouse_button_released(MouseButton::Left) {
+        handle_mouse_click(context, input.mouse_position.0, input.mouse_position.1);
+        //eprintln!("mouse pos: x={:?}, y={:?}", input.mouse_position.0, input.mouse_position.1);
     }
 }
 
@@ -65,12 +70,15 @@ pub fn reset_game(context: &mut Context) {
     reset_cars(context);
 }
 
-pub fn retry(context: &Context) {
+pub fn retry(context: &mut Context) {
+    reset_game(context);
     let mut game_state: ResourceRefMut<'_, GameState> = context.world.get_resource_mut::<GameState>().unwrap();
     game_state.0 = GameStateEnum::Running;
 }
 
-pub fn quit_to_menu(context: &Context) {
+pub fn quit_to_menu(context: &mut Context) {
+    change_menu_visibility::<Menu>(context);
+    reset_game(context);
     let mut game_state: ResourceRefMut<'_, GameState> = context.world.get_resource_mut::<GameState>().unwrap();
     game_state.0 = GameStateEnum::Menu;
 }
@@ -82,6 +90,32 @@ fn start_game(context: &Context) {
 
         change_menu_visibility::<Menu>(context);
         start_score(context);
+    }
+}
+
+// TODO Needs refactoring ASAP
+fn handle_mouse_click(context: &mut Context, mouse_x: f32, mouse_y: f32) {
+    let game_state: GameStateEnum = context.world.get_resource::<GameState>().unwrap().0.clone();
+
+    if game_state == GameStateEnum::Menu {
+        start_game(context);
+    } else if game_state == GameStateEnum::Paused {
+        if mouse_x > 768.0 && mouse_x < 903.0 && mouse_y > 149.0 && mouse_y < 170.0 {
+            change_menu_visibility::<Pause>(context);
+            quit_to_menu(context);
+        } else if mouse_x > 768.0 && mouse_x < 875.0 && mouse_y > 195.0 && mouse_y < 210.0 {
+            quit_game();
+        }
+    } else if game_state == GameStateEnum::GameOver {
+        if mouse_x > 768.0 && mouse_x < 903.0 && mouse_y > 110.0 && mouse_y < 130.0 {
+            change_menu_visibility::<GameOver>(context);
+            retry(context);
+        } else if mouse_x > 768.0 && mouse_x < 903.0 && mouse_y > 149.0 && mouse_y < 170.0 {
+            change_menu_visibility::<GameOver>(context);
+            quit_to_menu(context);
+        } else if mouse_x > 768.0 && mouse_x < 875.0 && mouse_y > 195.0 && mouse_y < 210.0 {
+            quit_game();
+        }
     }
 }
 
@@ -99,13 +133,14 @@ fn toggle_pause(context: &Context) {
     }
 }
 
-fn set_debug_visibility(context: &Context) {
+fn toggle_debug_visibility(context: &mut Context) {
     let mut debug_query: Query = Query::new(&context.world).with::<DebugComponent>();
     let debug_entities: Vec<Entity> = debug_query.entities_with_components().unwrap();
 
     for debug_entity in &debug_entities {
         change_visibilty(context, debug_entity);
     }
+    context.commands.show_fps(context.game_loop_listener.current_fps, Color::GREEN);
 }
 
 pub fn change_visibilty(context: &Context, entity: &Entity) {
