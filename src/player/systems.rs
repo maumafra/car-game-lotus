@@ -4,7 +4,7 @@ use crate::player::components::*;
 
 use crate::cars::components::OpponentCar;
 use crate::common::components::Border;
-use crate::common::resources::{GameState, GameStateEnum};
+use crate::common::resources::{GameState, GameStateEnum, GameAudio};
 use crate::menus::components::GameOver;
 use crate::menus::systems::change_menu_visibility;
 use crate::score::systems::{save_highscore_time, reset_score};
@@ -28,6 +28,14 @@ pub fn spawn_player(context: &mut Context) {
             Box::new(DrawOrder(3))
         ]
     );
+}
+
+pub fn horn(context: &Context) {
+    let game_state: ResourceRef<'_, GameState> = context.world.get_resource::<GameState>().unwrap();
+    if game_state.0 == GameStateEnum::Running {
+        let mut game_audio: ResourceRefMut<'_, GameAudio> = context.world.get_resource_mut::<GameAudio>().unwrap();
+        game_audio.0.play_static_sound("car_horn".to_string()).ok();
+    }
 }
 
 pub fn reset_player(context: &Context) {
@@ -85,6 +93,8 @@ fn crash(context: &mut Context) {
     let mut game_state: ResourceRefMut<'_, GameState> = context.world.get_resource_mut::<GameState>().unwrap();
     game_state.0 = GameStateEnum::GameOver;
     change_menu_visibility::<GameOver>(context);
+    let mut game_audio: ResourceRefMut<'_, GameAudio> = context.world.get_resource_mut::<GameAudio>().unwrap();
+    game_audio.0.stop_streaming_sound("car_acceleration".to_string()).ok();
     //eprintln!("crash!");
 }
 

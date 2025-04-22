@@ -17,4 +17,13 @@ pub enum GameStateEnum {
     GameOver
 }
 
+#[derive(Resource)]
+pub struct GameAudio(pub AudioSource);
+
+impl Default for GameAudio {
+    fn default() -> Self {
+        return Self(AudioSource::new().expect("Should create a audio source."));
+    }
+}
+
 pub const MARU_MONICA_FONT_PATH: &str = "fonts/x12y16pxMaruMonica.ttf";

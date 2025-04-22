@@ -42,7 +42,9 @@ your_game!(
 
 fn setup(context: &mut Context) {
     context.game_loop_listener.fps_cap(144);
+    let game_audio: GameAudio = setup_game_audio();
     context.commands.add_resources(vec![
+        Box::new(game_audio),
         Box::new(GameState::default()),
         Box::new(ScoreTime::default()),
         Box::new(Highscore::default()),

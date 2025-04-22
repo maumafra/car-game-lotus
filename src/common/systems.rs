@@ -6,8 +6,7 @@ use crate::menus::systems::*;
 use crate::menus::components::*;
 use crate::background::systems::reset_background;
 use crate::cars::systems::reset_cars;
-use crate::player::systems::move_player;
-use crate::player::systems::reset_player;
+use crate::player::systems::{move_player, reset_player, horn};
 use crate::score::systems::reset_score;
 use crate::score::systems::resume_score;
 use crate::score::systems::start_score;
@@ -49,6 +48,10 @@ pub fn handle_input(context: &mut Context) {
         move_game_over_selection(context, 1);
     }
 
+    if input.is_key_released(PhysicalKey::Code(KeyCode::KeyX)) {
+        horn(context)
+    }
+
     if input.is_key_released(PhysicalKey::Code(KeyCode::Semicolon)) {
         toggle_debug_visibility(context);
     }
@@ -74,6 +77,13 @@ pub fn retry(context: &mut Context) {
     reset_game(context);
     let mut game_state: ResourceRefMut<'_, GameState> = context.world.get_resource_mut::<GameState>().unwrap();
     game_state.0 = GameStateEnum::Running;
+    let mut game_audio: ResourceRefMut<'_, GameAudio> = context.world.get_resource_mut::<GameAudio>().unwrap();
+    game_audio.0.load_streaming_sound(
+        "car_acceleration",
+        "sounds/car/car-acceleration.wav",
+        AudioSettings::default().loop_region(..).volume(Value::Fixed(Decibels(2.0)))
+    ).ok();
+    game_audio.0.play_streaming_sound("car_acceleration".to_string()).ok();
 }
 
 pub fn quit_to_menu(context: &mut Context) {
@@ -87,7 +97,13 @@ fn start_game(context: &Context) {
     let mut game_state: ResourceRefMut<'_, GameState> = context.world.get_resource_mut::<GameState>().unwrap();
     if game_state.0 == GameStateEnum::Menu {
         game_state.0 = GameStateEnum::Running;
-
+        let mut game_audio: ResourceRefMut<'_, GameAudio> = context.world.get_resource_mut::<GameAudio>().unwrap();
+        game_audio.0.load_streaming_sound(
+            "car_acceleration",
+            "sounds/car/car-acceleration.wav",
+            AudioSettings::default().loop_region(..).volume(Value::Fixed(Decibels(2.0)))
+        ).ok();
+        game_audio.0.play_streaming_sound("car_acceleration".to_string()).ok();
         change_menu_visibility::<Menu>(context);
         start_score(context);
     }
@@ -121,14 +137,15 @@ fn handle_mouse_click(context: &mut Context, mouse_x: f32, mouse_y: f32) {
 
 fn toggle_pause(context: &Context) {
     let mut game_state: ResourceRefMut<'_, GameState> = context.world.get_resource_mut::<GameState>().unwrap();
+    let mut game_audio: ResourceRefMut<'_, GameAudio> = context.world.get_resource_mut::<GameAudio>().unwrap();
     if game_state.0 == GameStateEnum::Running {
         game_state.0 = GameStateEnum::Paused;
-
+        game_audio.0.pause_streaming_sound("car_acceleration".to_string()).ok();
         change_menu_visibility::<Pause>(context);
     } else if game_state.0 == GameStateEnum::Paused {
         game_state.0 = GameStateEnum::Running;
         resume_score(context);
-
+        game_audio.0.resume_streaming_sound("car_acceleration".to_string()).ok();
         change_menu_visibility::<Pause>(context);
     }
 }
@@ -177,4 +194,27 @@ pub fn spawn_borders(context: &mut Context) {
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle)))
         ]
     );
+}
+
+pub fn setup_game_audio() -> GameAudio{
+    let mut game_audio: GameAudio = GameAudio::default();
+    game_audio.0.load_streaming_sound(
+        "game_music",
+        "sounds/music/cyberpunk-music.wav",
+        AudioSettings::default().loop_region(..).volume(Value::Fixed(Decibels(-10.0)))
+    ).ok();
+    game_audio.0.play_streaming_sound("game_music".to_string()).ok();
+
+    game_audio.0.load_streaming_sound(
+        "car_acceleration",
+        "sounds/car/car-acceleration.wav",
+        AudioSettings::default().loop_region(..).volume(Value::Fixed(Decibels(2.0)))
+    ).ok();
+
+    game_audio.0.load_static_sound(
+        "car_horn",
+        "sounds/car/car-horn.wav",
+        AudioSettings::default().volume(Value::Fixed(Decibels(-12.0)))
+    ).ok();
+    return game_audio;
 }
