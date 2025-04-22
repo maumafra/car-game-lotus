@@ -4,6 +4,7 @@ use std::vec;
 mod background;
 mod cars;
 mod common;
+mod menus;
 mod player;
 mod score;
 
@@ -13,6 +14,7 @@ use cars::resources::*;
 use cars::systems::*;
 use common::resources::*;
 use common::systems::*;
+use menus::systems::*;
 use player::systems::*;
 use score::resources::*;
 use score::systems::*;
@@ -21,7 +23,7 @@ use score::systems::*;
 your_game!(
     WindowConfiguration {
         icon_path: "sprites/64x64/cars/white-lancer.png".to_string(),
-        title: "cyberlancer".to_string(),
+        title: "cyberlancer: made with lotus!".to_string(),
         background_color: Some(Color::BLACK),
         background_image_path: None,
         width: 960.0,
@@ -46,15 +48,16 @@ fn setup(context: &mut Context) {
         Box::new(Highscore::default()),
         Box::new(CarSpawnTimer::default()),
         Box::new(CarSprites::default()),
-        Box::new(BackgroundTileCounter(0)),
-        Box::new(PauseSelectionCounter(0))
+        Box::new(BackgroundTileCounter(0)), // TODO change this to component
+        Box::new(PauseSelectionCounter(0))  // TODO change this to component
     ]);
-    spawn_menu(context);
+    spawn_main_menu(context);
     spawn_player(context);
     spawn_background_tiles(context);
     spawn_borders(context);
     spawn_score_screen(context);
     spawn_pause_menu(context);
+    spawn_game_over_menu(context);
 }
 
 fn update(context: &mut Context) {
@@ -62,16 +65,14 @@ fn update(context: &mut Context) {
     //eprintln!("{:?}", context.game_loop_listener.current_fps);
     handle_input(context);
     if game_state == GameStateEnum::Running {
-        //move_player(context);
         update_score_time(context);
         handle_background_tiles(context);
         move_background(context);
         handle_cars_movement(context);
         check_player_collisions(context);
         spawn_cars(context);
-    } else if game_state == GameStateEnum::Paused {
-        //pause_screen(context);
     } else if game_state == GameStateEnum::GameOver {
-
+        handle_cars_movement_on_game_over(context);
+        move_crashed_player(context);
     }
 }

@@ -1,14 +1,17 @@
 use lotus_engine::*;
 
-use crate::common::resources::{GameState, GameStateEnum};
 use crate::player::components::*;
 
 use crate::cars::components::OpponentCar;
 use crate::common::components::Border;
+use crate::common::resources::{GameState, GameStateEnum};
+use crate::menus::components::GameOver;
+use crate::menus::systems::change_menu_visibility;
 use crate::score::systems::{save_highscore_time, reset_score};
 
 const CAR_SPAWN_Y: f32 = -0.5;
 const CAR_ROTATION: f32 = 10.0;
+const CAR_CRASH_ROTATION: f32 = 30.0;
 const SPRITE_PATH: &str = "sprites/64x64/cars/white-lancer.png";
 
 pub fn spawn_player(context: &mut Context) {
@@ -33,6 +36,7 @@ pub fn reset_player(context: &Context) {
         player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
     let mut transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&player_entity).unwrap();
+    transform.set_rotation(&context.render_state, 0.0);
     transform.set_position_x(&context.render_state, 0.0);
 }
 
@@ -55,17 +59,33 @@ pub fn move_player(context: &Context, direction: f32) {
     transform.set_rotation(&context.render_state, rotation);
 }
 
+pub fn move_crashed_player(context: &Context) {
+    let player_entity: Entity = {
+        let mut player_entity_query: Query = Query::new(&context.world).with::<MainCar>();
+        player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
+    };
+    let mut transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&player_entity).unwrap();
+    let rotation: f32  = transform.rotation + CAR_CRASH_ROTATION * context.delta;
+    transform.set_rotation(&context.render_state, rotation);
+}
+
 pub fn check_player_collisions(context: &mut Context) {
     let player_entity: Entity = {
         let mut player_entity_query: Query = Query::new(&context.world).with::<MainCar>();
         player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
     if check_player_border_collision(context, player_entity) || check_player_opponent_collision(context, player_entity) {
-        //eprintln!("crash!");
-        // TODO função reset_game no commons pra resetar o estado do jogo, incluir entao nessa nova função as duas abaixo
-        save_highscore_time(context);
-        reset_score(context);
+        crash(context);
     }
+}
+
+fn crash(context: &mut Context) {
+    save_highscore_time(context);
+    reset_score(context);
+    let mut game_state: ResourceRefMut<'_, GameState> = context.world.get_resource_mut::<GameState>().unwrap();
+    game_state.0 = GameStateEnum::GameOver;
+    change_menu_visibility::<GameOver>(context);
+    //eprintln!("crash!");
 }
 
 fn check_player_border_collision(context: &mut Context, player_entity: Entity) -> bool {

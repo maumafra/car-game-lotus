@@ -1,7 +1,7 @@
 use lotus_engine::*;
 use std::time::{Duration, Instant};
 
-use crate::common::systems::MARU_MONICA_FONT_PATH;
+use crate::common::resources::MARU_MONICA_FONT_PATH;
 use crate::score::components::*;
 use crate::score::resources::*;
 

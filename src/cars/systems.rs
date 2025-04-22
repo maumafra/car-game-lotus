@@ -4,7 +4,8 @@ use rand::{rngs::ThreadRng, seq::IndexedRandom, Rng};
 use crate::cars::components::*;
 use crate::cars::resources::*;
 
-const CAR_DESPAWN: f32 = -1.3;
+const CAR_DESPAWN_BOTTOM_LIMIT: f32 = -1.3;
+const CAR_DESPAWN_UPPER_LIMIT: f32 = 5.0;
 const MAX_SPAWN_VALUE: i32 = 5;
 const MIN_SPAWN_VALUE: i32 = 1;
 const SPAWN_OFFSET: f32 = 0.9;
@@ -32,13 +33,33 @@ pub fn handle_cars_movement(context: &mut Context) {
     for opponent in opponents_entities {
         let mut op_transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&opponent).unwrap();
 
-        if op_transform.get_position().y < CAR_DESPAWN {
+        if op_transform.get_position().y < CAR_DESPAWN_BOTTOM_LIMIT{
             //eprintln!("opponent despawned: {:?}", opponent.0);
             context.commands.despawn(opponent);
         } else {
             let op_velocity: ComponentRef<'_, Velocity> = context.world.get_entity_component::<Velocity>(&opponent).unwrap();
-            let move_down: f32 = op_transform.position.y + op_velocity.y * context.delta;
+            let move_down: f32 = op_transform.position.y - op_velocity.y * context.delta;
             op_transform.set_position_y(&context.render_state, move_down);
+        }
+    }
+}
+
+pub fn handle_cars_movement_on_game_over(context: &mut Context) {
+    let opponents_entities: Vec<Entity> = {
+        let mut opponents_query: Query = Query::new(&context.world).with::<OpponentCar>();
+        opponents_query.entities_with_components().unwrap()
+    };
+
+    for opponent in opponents_entities {
+        let mut op_transform: ComponentRefMut<'_, Transform> = context.world.get_entity_component_mut::<Transform>(&opponent).unwrap();
+
+        if op_transform.get_position().y > CAR_DESPAWN_UPPER_LIMIT{
+            //eprintln!("opponent despawned: {:?}", opponent.0);
+            context.commands.despawn(opponent);
+        } else {
+            let op_velocity: ComponentRef<'_, Velocity> = context.world.get_entity_component::<Velocity>(&opponent).unwrap();
+            let move_up: f32 = op_transform.position.y + op_velocity.y * context.delta * 1.5;
+            op_transform.set_position_y(&context.render_state, move_up);
         }
     }
 }
@@ -84,7 +105,7 @@ fn spawn_car(context: &mut Context, spawn_position: Vector2<f32>, car_srpite_pat
                 0.0,
                 Scale::new(Vector2::new(0.08, 0.08), Strategy::Normalized))),
             Box::new(OpponentCar()),
-            Box::new(Velocity::new(Vector2::new(0.0, -2.0))),
+            Box::new(Velocity::new(Vector2::new(0.0, 2.0))),
             Box::new(Collision::new(Collider::new_simple(GeometryType::Rectangle))),
             Box::new(DrawOrder(2))
         ]
