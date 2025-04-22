@@ -8,7 +8,7 @@ const BACKGROUND_VELOCITY: f32 = -3.0;
 pub fn spawn_background_tiles(context: &mut Context) {
     context.commands.spawn(
         vec![
-            Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
+            Box::new(Sprite::new("sprites/960x600/worlds/night-bridge_0.png".to_string())),
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.005, 0.0), Strategy::Normalized),
                 0.0,
@@ -19,7 +19,7 @@ pub fn spawn_background_tiles(context: &mut Context) {
     );
     context.commands.spawn(
         vec![
-            Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
+            Box::new(Sprite::new("sprites/960x600/worlds/night-bridge_0.png".to_string())),
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.005, 2.0), Strategy::Normalized),
                 0.0,
@@ -30,7 +30,7 @@ pub fn spawn_background_tiles(context: &mut Context) {
     );
     context.commands.spawn(
         vec![
-            Box::new(Sprite::new("sprites/960x600/worlds/night-bridge.png".to_string())),
+            Box::new(Sprite::new("sprites/960x600/worlds/night-bridge_1.png".to_string())),
             Box::new(Transform::new(
                 Position::new(Vector2::new(0.005, 4.0), Strategy::Normalized),
                 0.0,
