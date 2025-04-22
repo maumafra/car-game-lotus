@@ -15,6 +15,8 @@
 - **Procedural Generation**: Dynamic obstacles.
 - **Scoring System**: Survive longer = higher score.
 
+![cyberlancer](https://github.com/user-attachments/assets/ef3869d5-a7e5-4d89-bb94-c9dd56bfeb05)
+
 ## 🎮 Controls
 | Key               | Action                          |
 |-------------------|---------------------------------|
@@ -69,7 +71,7 @@ car-game-lotus/
 ## 🛠️ Tech Stack  
 ```rust
 [dependencies]
-lotus_engine = "0.1.24"  // Graphics engine
+lotus_engine = "0.1.24"  // Game engine
 rand = "0.9.0"          // Procedural generation
 ```
 
