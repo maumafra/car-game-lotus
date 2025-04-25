@@ -5,12 +5,12 @@ use crate::common::resources::*;
 use crate::common::systems::*;
 
 
-const LEFT_MENU_TEXT_X: f32 = 0.425;
-const LEFT_MENU_TEXT_Y: f32 = 0.05;
+const LEFT_MENU_TEXT_X: f32 = 408.0;
+const LEFT_MENU_TEXT_Y: f32 = 30.0;
 const MENU_DRAW_ORDER: u32 = 10;
 const MENU_FONT_SIZE: f32 = 30.0;
-const RIGHT_MENU_TEXT_X: f32 = 0.8;
-const RIGHT_MENU_TEXT_Y: f32 = 0.17;
+const RIGHT_MENU_TEXT_X: f32 = 768.0;
+const RIGHT_MENU_TEXT_Y: f32 = 102.0;
 const PAUSE_OPTIONS_LEN: i32 = 2;
 const GAME_OVER_OPTIONS_LEN: i32 = 3;
 
@@ -84,9 +84,9 @@ pub fn move_game_over_selection(context: &mut Context, direction: i32) {
         selection_counter.0
     };
 
-    let y: f32 = RIGHT_MENU_TEXT_Y + 0.07*selection as f32;
+    let y: f32 = RIGHT_MENU_TEXT_Y + 42.0*selection as f32;
     let text_renderer: &mut TextRenderer =  context.world.text_renderers.get_mut(&go_selection_entity.0).unwrap();
-    text_renderer.text.position.update_values(Vector2::new(RIGHT_MENU_TEXT_X-0.02, y));
+    text_renderer.text.position.update_values(Vector2::new(RIGHT_MENU_TEXT_X-19.0, y));
     if selection == 0 {
         text_renderer.text.color = Color::YELLOW;
     } else {
@@ -109,8 +109,8 @@ pub fn move_pause_selection(context: &mut Context, direction: i32) {
         selection_counter.0
     };
 
-    let y: f32 = RIGHT_MENU_TEXT_Y + 0.07 + 0.07*selection as f32;
-    context.world.text_renderers.get_mut(&pause_selection_entity.0).unwrap().text.position.update_values(Vector2::new(RIGHT_MENU_TEXT_X-0.02, y));
+    let y: f32 = RIGHT_MENU_TEXT_Y + 42.0 + 42.0*selection as f32;
+    context.world.text_renderers.get_mut(&pause_selection_entity.0).unwrap().text.position.update_values(Vector2::new(RIGHT_MENU_TEXT_X-19.0, y));
 }
 
 pub fn spawn_main_menu(context: &mut Context) {
@@ -122,7 +122,7 @@ pub fn spawn_main_menu(context: &mut Context) {
     );
     let start_text_shadow: Text = Text::new(
         Font::new(MARU_MONICA_FONT_PATH.to_string(), MENU_FONT_SIZE),
-        Position::new(Vector2::new(LEFT_MENU_TEXT_X+0.002, LEFT_MENU_TEXT_Y+0.002), Strategy::Pixelated),
+        Position::new(Vector2::new(LEFT_MENU_TEXT_X+2.0, LEFT_MENU_TEXT_Y+1.0), Strategy::Pixelated),
         Color::BLACK,
         "> enter <".to_string()
     );
@@ -157,13 +157,13 @@ pub fn spawn_pause_menu(context: &mut Context) {
     spawn_right_menu(context);
     let pause: Text = Text::new(
         Font::new(MARU_MONICA_FONT_PATH.to_string(), 40.0),
-        Position::new(Vector2::new(RIGHT_MENU_TEXT_X, 0.07), Strategy::Pixelated),
+        Position::new(Vector2::new(RIGHT_MENU_TEXT_X, 42.0), Strategy::Pixelated),
         Color::WHITE,
         "pause".to_string()
     );
     let selection: Text = Text::new(
         Font::new(MARU_MONICA_FONT_PATH.to_string(), 30.0),
-        Position::new(Vector2::new(RIGHT_MENU_TEXT_X-0.02, RIGHT_MENU_TEXT_Y+0.07), Strategy::Pixelated),
+        Position::new(Vector2::new(RIGHT_MENU_TEXT_X-19.0, RIGHT_MENU_TEXT_Y+42.0), Strategy::Pixelated),
         Color::WHITE,
         ">".to_string()
     );
@@ -190,7 +190,7 @@ pub fn spawn_game_over_menu(context: &mut Context) {
     spawn_right_menu(context);
     let game_over: Text = Text::new(
         Font::new(MARU_MONICA_FONT_PATH.to_string(), 40.0),
-        Position::new(Vector2::new(RIGHT_MENU_TEXT_X, 0.07), Strategy::Pixelated),
+        Position::new(Vector2::new(RIGHT_MENU_TEXT_X, 42.0), Strategy::Pixelated),
         Color::WHITE,
         "game over :(".to_string()
     );
@@ -202,7 +202,7 @@ pub fn spawn_game_over_menu(context: &mut Context) {
     );
     let selection: Text = Text::new(
         Font::new(MARU_MONICA_FONT_PATH.to_string(), 30.0),
-        Position::new(Vector2::new(RIGHT_MENU_TEXT_X-0.02, RIGHT_MENU_TEXT_Y), Strategy::Pixelated),
+        Position::new(Vector2::new(RIGHT_MENU_TEXT_X-19.0, RIGHT_MENU_TEXT_Y), Strategy::Pixelated),
         Color::YELLOW,
         ">".to_string()
     );
@@ -237,13 +237,13 @@ pub fn spawn_game_over_menu(context: &mut Context) {
 fn spawn_right_menu(context: &mut Context) {
     let quit_to_menu: Text = Text::new(
         Font::new(MARU_MONICA_FONT_PATH.to_string(), 30.0),
-        Position::new(Vector2::new(RIGHT_MENU_TEXT_X, RIGHT_MENU_TEXT_Y + 0.07), Strategy::Pixelated),
+        Position::new(Vector2::new(RIGHT_MENU_TEXT_X, RIGHT_MENU_TEXT_Y + 42.0), Strategy::Pixelated),
         Color::WHITE,
         "quit to menu".to_string()
     );
     let quit: Text = Text::new(
         Font::new(MARU_MONICA_FONT_PATH.to_string(), 30.0),
-        Position::new(Vector2::new(RIGHT_MENU_TEXT_X, RIGHT_MENU_TEXT_Y + 0.14), Strategy::Pixelated),
+        Position::new(Vector2::new(RIGHT_MENU_TEXT_X, RIGHT_MENU_TEXT_Y + 84.0), Strategy::Pixelated),
         Color::WHITE,
         "quit game".to_string()
     );

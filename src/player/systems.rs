@@ -82,7 +82,7 @@ pub fn check_player_collisions(context: &mut Context) {
         player_entity_query.entities_with_components().unwrap().first().unwrap().clone()
     };
     if check_player_border_collision(context, player_entity) || check_player_opponent_collision(context, player_entity) {
-        //crash(context);
+        crash(context);
     }
 }
 

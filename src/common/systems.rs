@@ -16,7 +16,8 @@ pub fn handle_input(context: &mut Context) {
         context.world.get_resource::<Input>().unwrap().clone()
     };
 
-    if input.is_key_released(PhysicalKey::Code(KeyCode::Enter)) {
+    if input.is_key_released(PhysicalKey::Code(KeyCode::Enter))
+    || input.is_key_released(PhysicalKey::Code(KeyCode::Space)) {
         start_game(context);
         enter_pause_option(context);
         enter_game_over_option(context);
@@ -171,8 +172,7 @@ pub fn spawn_borders(context: &mut Context) {
         vec![
             Box::new(Shape::new(Orientation::Horizontal, GeometryType::Square, Color::RED)),
             Box::new(Transform::new(
-                Position::new(Vector2::new(324.0, spawn_y), Strategy::Pixelated),
-                //Position::new(Vector2::new(0.51, 0.0), Strategy::Normalized),
+                Position::new(Vector2::new(330.0, spawn_y), Strategy::Pixelated),
                 0.0,
                 Vector2::new(0.005, 1.0))),
             Box::new(Border()),
@@ -187,7 +187,6 @@ pub fn spawn_borders(context: &mut Context) {
             Box::new(Shape::new(Orientation::Horizontal, GeometryType::Square, Color::RED)),
             Box::new(Transform::new(
                 Position::new(Vector2::new(635.0, spawn_y), Strategy::Pixelated),
-                //Position::new(Vector2::new(-0.5, 0.0), Strategy::Normalized),
                 0.0,
                 Vector2::new(0.005, 1.0))),
             Box::new(Border()),
